@@ -1,36 +1,55 @@
 def call(Map configMap){
     pipeline {
-        agent { label 'AGENT-1' }
+        agent  {
+            label 'AGENT-1'
+        }
         environment { 
+            COURSE = 'jenkins'
             greeting = configMap.get('greeting')
         }
         options {
+            timeout(time: 30, unit: 'MINUTES') 
             disableConcurrentBuilds()
-            timeout(time: 30, unit: 'MINUTES')
         }
-        parameters{
-            booleanParam(name: 'deploy', defaultValue: false, description: 'Toggle this value')
+        parameters {
+            string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
+            text(name: 'BIOGRAPHY', defaultValue: '', description: 'Enter some information about the person')
+            booleanParam(name: 'TOGGLE', defaultValue: true, description: 'Toggle this value')
         }
+        // Build
         stages {
-            stage('print greeting') {
+            stage('Build') {
                 steps {
-                script{
-                    echo "Version is: $greeting"
+                    script{
+                        sh """
+                            echo "Hello Build"
+                            sleep 10
+                            env
+                            echo "Hello ${params.PERSON}"
+                        """
+                    }
                 }
+            }
+            stage('Test') {
+                steps {
+                    script{
+                        echo 'Testing..'
+                    }
                 }
             }
             
         }
+
         post { 
             always { 
                 echo 'I will always say Hello again!'
                 deleteDir()
             }
-            failure { 
-                echo 'I will run when pipeline is failed'
-            }
             success { 
-                echo 'I will run when pipeline is success'
+                echo 'Hello Success'
+            }
+            failure { 
+                echo 'Hello Failure'
             }
         }
     }
