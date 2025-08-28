@@ -19,12 +19,11 @@ def call(Map configMap){
         }
         // Build
         stages {
-            stage('Read package.json') {
+            stage('Read pom.xml') {
                 steps {
                     script {
-                        def packageJson = readJSON file: 'package.json'
-                        appVersion = packageJson.version
-                        echo "Package version: ${appVersion}"
+                        appVersion = readMavenPom().getVersion()
+                        echo "app version: ${appVersion}"
                     }
                 }
             }
@@ -32,7 +31,7 @@ def call(Map configMap){
                 steps {
                     script {
                     sh """
-                            npm install
+                        mvn clean package 
                     """
                     }
                 }
@@ -65,7 +64,7 @@ def call(Map configMap){
                     timeout(time: 1, unit: 'HOURS') {
                     waitForQualityGate abortPipeline: true }
                 }
-            } */
+            } 
             stage('Check Dependabot Alerts') {
                 environment { 
                     GITHUB_TOKEN = credentials('github-token')
@@ -77,7 +76,7 @@ def call(Map configMap){
                             script: """
                                 curl -s -H "Accept: application/vnd.github+json" \
                                     -H "Authorization: token ${GITHUB_TOKEN}" \
-                                    https://api.github.com/repos/BharathKumarReddy2103/catalogue/dependabot/alerts
+                                    https://api.github.com/repos/daws-84s/catalogue/dependabot/alerts
                             """,
                             returnStdout: true
                         ).trim()
@@ -99,7 +98,7 @@ def call(Map configMap){
                         }
                     }
                 }
-            }
+            }*/
             stage('Docker Build') {
                 steps {
                     script {
@@ -108,12 +107,13 @@ def call(Map configMap){
                                 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com
                                 docker build -t ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com/${PROJECT}/${COMPONENT}:${appVersion} .
                                 docker push ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com/${PROJECT}/${COMPONENT}:${appVersion}
+                                #aws ecr wait image-scan-complete --repository-name ${PROJECT}/${COMPONENT} --image-id imageTag=${appVersion} --region ${REGION}
                             """
                         }
                     }
                 }
             }
-            stage('Check Scan Results') {
+            /* stage('Check Scan Results') {
                 steps {
                     script {
                         withAWS(credentials: 'aws-creds', region: 'us-east-1') {
@@ -146,7 +146,7 @@ def call(Map configMap){
                         }
                     }
                 }
-            }
+            } */
             stage('Trigger Deploy') {
                 when{
                     expression { params.deploy }
