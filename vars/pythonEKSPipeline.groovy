@@ -6,7 +6,7 @@ def call(Map configMap){
         environment { 
             appVersion = ''
             REGION = "us-east-1"
-            ACC_ID = "334864977755"
+            ACC_ID = "34864977755"
             PROJECT = configMap.get('project')
             COMPONENT = configMap.get('component')
         }
@@ -19,10 +19,10 @@ def call(Map configMap){
         }
         // Build
         stages {
-            stage('Read pom.xml') {
+            stage('Read version') {
                 steps {
                     script {
-                        appVersion = readMavenPom().getVersion()
+                        appVersion = readFile('version').trim()
                         echo "app version: ${appVersion}"
                     }
                 }
@@ -31,7 +31,7 @@ def call(Map configMap){
                 steps {
                     script {
                     sh """
-                        mvn clean package 
+                        pip3 install -r requirements.txt
                     """
                     }
                 }
